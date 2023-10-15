@@ -7,11 +7,56 @@
 using namespace std;
 
 
+
+
+
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
+    /*
     cout << "Step 0" << "\n"; 
     for (long long int i=0; i < size; i++) {
+        
         points[i][2] = rand() % 2;
     }      
+    */
+   int* visitados = new int[size]; 
+   int c = 0;
+
+   for (long long int i=0; i < size; i++) {
+        
+        points[i][2] = rand() % 2;
+    }      
+
+
+   /*
+   DBSCAN(D, eps, MinPts)
+   C = 0
+   for each unvisited point P in dataset D
+      mark P as visited
+      NeighborPts = regionQuery(P, eps)
+      if sizeof(NeighborPts) < MinPts
+         mark P as NOISE
+      else
+         C = next cluster
+         expandCluster(P, NeighborPts, C, eps, MinPts)
+
+expandCluster(P, NeighborPts, C, eps, MinPts)
+   add P to cluster C
+   for each point P' in NeighborPts
+      if P' is not visited
+         mark P' as visited
+         NeighborPts' = regionQuery(P', eps)
+         if sizeof(NeighborPts') >= MinPts
+            NeighborPts = NeighborPts joined with NeighborPts'
+      if P' is not yet member of any cluster
+         add P' to cluster C
+
+regionQuery(P, eps)
+   return all points within P's eps-neighborhood (including P)
+   
+   
+   */
+
+
     cout << "Complete" << "\n"; 
 }
 
@@ -51,6 +96,7 @@ int main(int argc, char** argv) {
     const string input_file_name = to_string(size)+"_data.csv";
     const string output_file_name = to_string(size)+"_results.csv";    
     float** points = new float*[size];
+
 
     for(long long int i = 0; i < size; i++) {
         points[i] = new float[3]{0.0, 0.0, 0.0}; 
