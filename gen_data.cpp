@@ -4,7 +4,7 @@
 
 using namespace std;
 
-void print_points(long long int size, float** points) {
+void print_data(long long int size, float** points) {
 	//int size = sizeof(points)/sizeof(int);
 	cout << "Datos: \n";
 
@@ -35,28 +35,18 @@ float** gen_data(long long int size) {
 	return points;
 }
 
-void save_to_CSV(string file_name, float** points, long long int size) {
-    fstream fout;
-    fout.open(file_name, ios::out);
-    
-    for(long long int i = 0; i < size; i++) {
-        fout << points[i][0] << ","
-             << points[i][1] << ","
-             << points[i][2] << "\n";
-    }
-}
-
+/*
 int main(int argc, char *argv[]) {
 	srand(time(NULL)); // cambia la semilla del rng
 	long long int size = 20;
 	float** points = gen_data(size);
 	
 	save_to_CSV("test_20.csv", points, size);
-	print_points(size, points);
+	print_data(size, points);
 	
 	for(long long int i = 0; i < size; i++)
         delete[] points[i];
     delete[] points;
 	return 0;
-}
+}*/
 
