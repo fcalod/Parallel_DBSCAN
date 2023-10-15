@@ -93,8 +93,8 @@ int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
     const long long int size = 4000;
-    const string input_file_name = to_string(size)+"_data.csv";
-    const string output_file_name = to_string(size)+"_results.csv";    
+    const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
+    const string output_file_name = "CSV/"+to_string(size)+"_results.csv";    
     float** points = new float*[size];
 
 
