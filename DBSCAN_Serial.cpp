@@ -14,7 +14,7 @@ using namespace std;
 
 void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos) {
     //vecinos.empty();
-    for(long long int i = 0; i < size; i++){
+    for(long long int i = 0; i < size; i++) {
         float distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));
         if (distance < epsilon)
             vecinos.push_front(i);
@@ -22,10 +22,11 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
 }
 
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
-
    int* cluster = new int[size]; 
+   
    for(long long int i = 0; i < size; i++)
         cluster[i] = 0; // -1 -> Noise // 0 -> Unvisited // C - Visited, part of cluster C
+   
    int c = 0;
    list<int> vecinos;
    list<int> vecinos2;
@@ -35,16 +36,19 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
        vecinos.clear();
        if(cluster[i]==0) {
            regionQuery(points,i,epsilon,size, vecinos);
-           if (vecinos.size() < min_samples) {
+           
+           if(vecinos.size() < min_samples) {
                 cluster[i] = -1;
                 points[i][2] = 0;
            } else {
                 c++;
                 cluster[i] = c;
                 points[i][2] = 1;
-                while (!vecinos.empty()) {
+                
+                while(!vecinos.empty()) {
                     int q = vecinos.front();
                     vecinos.pop_front();
+                    
                     if(cluster[q]==0) {
                         if (cluster[q] <=0 ) {
                             cluster[q] = c;
@@ -52,6 +56,7 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
                         }
                             
                         regionQuery(points,q,epsilon,size, vecinos2);
+
                         if(vecinos.size()>=min_samples) {
                           // Union de Stacks
                           vecinos.merge(vecinos2);
@@ -62,10 +67,11 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
             }    
         }
     }        
-    
+
     cout << c << "Clusters, ->" << "Complete" << "\n"; 
   
     delete[] cluster;
+}
 
    /*
    DBSCAN(D, eps, MinPts)
@@ -107,18 +113,18 @@ void load_CSV(string file_name, float** points, long long int size) {
     
     // Lee el archivo una linea a la vez
     while(getline(in, line) && point_number < size) {
-      stringstream ss(line);
-      points[point_number] = new float[3];
+		stringstream ss(line);
+		points[point_number] = new float[3];
 
-      // Separa cada linea usando las comas
-      getline(ss, val, ',');
-      points[point_number][0] = stof(val);
-      getline(ss, val, ',');
-      points[point_number][1] = stof(val);
-      getline(ss, val, ',');
-      points[point_number][2] = stof(val);
+		// Separa cada linea usando las comas
+		getline(ss, val, ',');
+		points[point_number][0] = stof(val);
+		getline(ss, val, ',');
+		points[point_number][1] = stof(val);
+		getline(ss, val, ',');
+		points[point_number][2] = stof(val);
 
-      point_number++;
+		point_number++;
     }
 }
 
@@ -169,7 +175,7 @@ int main(int argc, char** argv) {
         // index 2: 0 for noise point, 1 for core point
     }*/
 	
-	  // carga los datos
+  	// carga los datos
     load_CSV(input_file_name, points, size);
     //print_data(size, points);
     // Clasifica
