@@ -50,8 +50,11 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
                     int q = vecinos.front();
                     vecinos.pop_front();
                     if(cluster[q]==0){
-                        if (cluster[q] <=0 )
+                        if (cluster[q] <=0 ){
                             cluster[q] = c;
+                            points[q][2] = 1;
+                        }
+                            
                         regionQuery(points,q,epsilon,size, vecinos2);
                         if (vecinos.size()>=min_samples){
                         // Union de Stacks
@@ -63,8 +66,11 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
             }    
         }
     }        
-    delete[] cluster;
+    
     cout << c << "Clusters, ->" << "Complete" << "\n"; 
+  
+    delete[] cluster;
+
 }
 
 
