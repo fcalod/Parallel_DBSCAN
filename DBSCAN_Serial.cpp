@@ -21,7 +21,7 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
     }
 }
 
-void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
+void noise_detection(float** points, float epsilon, int min_samples, long long int size){
 
    int* cluster = new int[size]; 
    for(long long int i = 0; i < size; i++)
@@ -33,9 +33,11 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
    for (long long int i=0; i < size; i++) {
        //Si no hemos vistado el punto, hacer el proceso
        vecinos.clear();
-       if(cluster[i]==0) {
+       if(cluster[i]==0) 
+       {
            regionQuery(points,i,epsilon,size, vecinos);
-           if (vecinos.size() < min_samples) {
+           if (vecinos.size() < min_samples)
+           {
                 cluster[i] = -1;
                 points[i][2] = 0;
            } else {
@@ -61,12 +63,14 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
                 }
             }    
         }
-    }        
-    
+    } 
+
     cout << c << "Clusters, ->" << "Complete" << "\n"; 
   
     delete[] cluster;
-
+    
+}       
+    
    /*
    DBSCAN(D, eps, MinPts)
    C = 0
@@ -140,7 +144,7 @@ void load_CSV(string file_name, float** points, long long int size) {
     }*/
 
 
-void save_to_CSV(string file_name, float** points, long long int size) {
+void save_to_CSV(string file_name, float** points, long long int size){
     fstream fout;
     fout.open(file_name, ios::out);
     
