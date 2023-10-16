@@ -5,82 +5,67 @@
 #include <cmath>
 #include <stack>
 
+#include <list>
+
+#include <set>
+#include <algorithm>
+
 using namespace std;
 
 
-/*
-regionQuery(P, eps)
-   return all points within P's eps-neighborhood (including P)
-*/
-void regionQuery(float** points, int p, float epsilon, long long int size, stack<int> &vecinos){
+void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos){
     //vecinos.empty();
     for(long long int i = 0; i < size; i++){
         float distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));
         if ( distance < epsilon )
-            vecinos.push(i);
+            vecinos.push_front(i);
     }
 }
 
-/*
-
-expandCluster(P, NeighborPts, C, eps, MinPts)
-   add P to cluster C
-   for each point P' in NeighborPts
-      if P' is not visited
-         mark P' as visited
-         NeighborPts' = regionQuery(P', eps)
-         if sizeof(NeighborPts') >= MinPts
-            NeighborPts = NeighborPts joined with NeighborPts'
-      if P' is not yet member of any cluster
-         add P' to cluster C
-
-*/
-void expandCluster(float** points, float epsilon, int min_samples, long long int size, stack<int> &vecinos){
-    
-}
-  
-  
-  
-  
-   /*
-   DBSCAN(D, eps, MinPts)
-   C = 0
-   for each unvisited point P in dataset D  // for
-      mark P as visited // 
-      NeighborPts = regionQuery(P, eps)
-      if sizeof(NeighborPts) < MinPts
-         mark P as NOISE
-      else
-         C = next cluster
-         expandCluster(P, NeighborPts, C, eps, MinPts)
-*/
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
-    /*
-    cout << "Step 0" << "\n"; 
-    for (long long int i=0; i < size; i++) {
-        
-        points[i][2] = rand() % 2;
-    }      
-    */
-   int* visited = new int[size]; 
+
+   int* cluster = new int[size]; 
    for(long long int i = 0; i < size; i++)
-        visited[i] = 0; // 0 - Unvisited // 1 - Visited
+        cluster[i] = 0; // -1 -> Noise // 0 -> Unvisited // C - Visited, part of cluster C
    int c = 0;
-   stack<int> vecinos;
+   list<int> vecinos;
+   list<int> vecinos2;
 
    for (long long int i=0; i < size; i++) {
        //Si no hemos vistado el punto, hacer el proceso
-       if(visited[i]==0){
-           visited[i] = 1;
+       vecinos.clear();
+       if(cluster[i]==0){
            regionQuery(points,i,epsilon,size, vecinos);
-           if (vecinos.size()<min_samples)
+           if (vecinos.size()<min_samples){
+                cluster[i] = -1;
                 points[i][2] = 0;
+           }         
            else
+           {
                 c++;
-                //expandCluster();
-
-       } 
-    }      
+                cluster[i] = c;
+                points[i][2] = 1;
+                while (!vecinos.empty())
+                {
+                    int q = vecinos.front();
+                    vecinos.pop_front();
+                    if(cluster[q]==0){
+                        if (cluster[q] <=0 )
+                            cluster[q] = c;
+                        regionQuery(points,q,epsilon,size, vecinos2);
+                        if (vecinos.size()>=min_samples){
+                        // Union de Stacks
+                        vecinos.merge(vecinos2);
+                        vecinos2.clear();
+                        }    
+                    }
+                }
+            }    
+        }
+    }        
+    delete[] cluster;
+    cout << c << "Clusters, ->" << "Complete" << "\n"; 
+}
 
 
    /*
@@ -112,10 +97,7 @@ regionQuery(P, eps)
    
    */
 
-    delete[] visited;
-    cout << "Complete" << "\n"; 
-}
-
+ 
 void load_CSV(string file_name, float** points, long long int size) {
     ifstream in(file_name);
     if (!in) {
