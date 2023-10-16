@@ -1,4 +1,4 @@
-#include <omp.h>
+#include <bits/stdc++.h> 
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -8,6 +8,7 @@
 #include <list>
 #include <set>
 #include <algorithm>
+#include <time.h>
 #include "gen_data.cpp"
 
 using namespace std;
@@ -22,53 +23,54 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
 }
 
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
-   int* cluster = new int[size]; 
-   
-   for(long long int i = 0; i < size; i++)
-        cluster[i] = 0; // -1 -> Noise // 0 -> Unvisited // C - Visited, part of cluster C
-   
-   int c = 0;
-   list<int> vecinos;
-   list<int> vecinos2;
+	int* cluster = new int[size]; 
 
-   for (long long int i=0; i < size; i++) {
-       //Si no hemos vistado el punto, hacer el proceso
-       vecinos.clear();
-       if(cluster[i]==0) {
-           regionQuery(points,i,epsilon,size, vecinos);
-           
-           if(vecinos.size() < min_samples) {
-                cluster[i] = -1;
-                points[i][2] = 0;
-           } else {
-                c++;
-                cluster[i] = c;
-                points[i][2] = 1;
-                
-                while(!vecinos.empty()) {
-                    int q = vecinos.front();
-                    vecinos.pop_front();
-                    
-                    if(cluster[q]==0) {
-                        if (cluster[q] <=0 ) {
-                            cluster[q] = c;
-                            points[q][2] = 1;
-                        }
-                            
-                        regionQuery(points,q,epsilon,size, vecinos2);
+	for(long long int i = 0; i < size; i++)
+		cluster[i] = 0; // -1 -> Noise // 0 -> Unvisited // C - Visited, part of cluster C
 
-                        if(vecinos.size()>=min_samples) {
-                          // Union de Stacks
-                          vecinos.merge(vecinos2);
-                          vecinos2.clear();
-                        }    
-                    }
-                }
-            }    
-        }
-    }        
+	int c = 0;
+	list<int> vecinos;
+	list<int> vecinos2;
 
-    cout << c << "Clusters, ->" << "Complete" << "\n"; 
+	for(long long int i=0; i < size; i++) {
+	   //Si no hemos vistado el punto, hacer el proceso
+	   vecinos.clear();
+	   
+	   if(cluster[i]==0) {
+		   regionQuery(points, i, epsilon, size, vecinos);
+		   
+		   if(vecinos.size() < min_samples) {
+		        cluster[i] = -1;
+		        points[i][2] = 0;
+		   } else {
+		        c++;
+		        cluster[i] = c;
+		        points[i][2] = 1;
+		        
+		        while(!vecinos.empty()) {
+		            int q = vecinos.front();
+		            vecinos.pop_front();
+		            
+		            if(cluster[q]==0) {
+		                if (cluster[q] <=0 ) {
+		                    cluster[q] = c;
+		                    points[q][2] = 1;
+		                }
+		                    
+		                regionQuery(points,q,epsilon,size, vecinos2);
+
+		                if(vecinos.size() >= min_samples) {
+		                  // Union de Stacks
+		                  vecinos.merge(vecinos2);
+		                  vecinos2.clear();
+		                }    
+		            }
+		        }
+		    }    
+		}
+	}        
+
+    cout << c << " Clusters, -> " << "Complete" << "\n"; 
   
     delete[] cluster;
 }
@@ -128,24 +130,6 @@ void load_CSV(string file_name, float** points, long long int size) {
     }
 }
 
-    /*
-    long long int point_number = 0; 
-    
-    while (!in.eof() && (point_number < size)) {
-        char* line = new char[12];
-        streamsize row_size = 12;
-        in.read(line, row_size);
-        string row = line;
-        
-        points[point_number] = new float[3];
-        points[point_number][0] = stof(row.substr(0, 5));
-        points[point_number][1] = stof(row.substr(6, 5));
-        cout << stof(row.substr(0, 5)) << " - " << stof(row.substr(6, 5)) << "\n";
-        points[point_number][2] = 0;
-        point_number++;
-    }*/
-
-
 void save_to_CSV(string file_name, float** points, long long int size) {
     fstream fout;
     fout.open(file_name, ios::out);
@@ -163,6 +147,7 @@ int main(int argc, char** argv) {
     const long long int size = 4000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
+    clock_t start, end;
     srand(time(NULL)); // cambia la semilla del rng
     //float** points = gen_data(size);  
     float** points = new float*[size];
@@ -175,13 +160,19 @@ int main(int argc, char** argv) {
         // index 2: 0 for noise point, 1 for core point
     }*/
 	
-  	// carga los datos
+  	// Carga los datos
     load_CSV(input_file_name, points, size);
     //print_data(size, points);
     // Clasifica
+    start = clock();
+ 	// unsync the I/O of C and C++. 
+    //ios_base::sync_with_stdio(false); 
     noise_detection(points, epsilon, min_samples, size); 
+    end = clock();
     // Guarda los resultados
     save_to_CSV(output_file_name, points, size);
+	
+	cout << "Time: " << fixed << double(end-start) / double(CLOCKS_PER_SEC) << setprecision(5) << " sec " << endl;
 	
     for(long long int i = 0; i < size; i++) {
         delete[] points[i];
