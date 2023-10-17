@@ -1,5 +1,5 @@
 #include <omp.h>
-#include <bits/stdc++.h> 
+//#include <bits/stdc++.h> 
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -20,11 +20,7 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
     
     # pragma omp parallel for collapse(1) default(shared) private(i, distance)
 	for(i = 0; i < size; i++) {
-	    distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));
-	    
-	    //cout << "i " << i << endl;
-	    //cout << "dist " << distance << endl;
-	    
+	    distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));	
 	    if (distance < epsilon)
 	        vecinos.push_front(i);
 	}
@@ -40,25 +36,27 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 	int c = 0; // cantidad de clusters
 	list<int> vecinos;
 	list<int> vecinos2;
+	long long int i;
 
-	//# pragma omp parallel
-	for(long long int i=0; i < size; i++) {
+	//# pragma omp parallel for collapse(1) default(shared) private(vecinos,vecinos2,i)
+	for( i=0; i < size; i++) {
 	   //Si no hemos vistado el punto, hacer el proceso
 	   vecinos.clear();
 	   
 	   if(cluster[i]==0) {
 		   regionQuery(points, i, epsilon, size, vecinos);
-		   cout << "sobrevivi" << endl;
+		   
 		   
 		   if(vecinos.size() < min_samples) {
 		        cluster[i] = -1;
 		        points[i][2] = 0;
+				
 		   } else {
 		        c++;
 		        cluster[i] = c;
 		        points[i][2] = 1;
-		        
 		        while(!vecinos.empty()) {
+					
 		            int q = vecinos.front();
 		            vecinos.pop_front();
 		            
@@ -81,7 +79,7 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 		}
 	}
 
-    cout << c << " Clusters, -> " << "Complete" << "\n"; 
+    std::cout << c << " Clusters, -> " << "Complete" << "\n"; 
   
     delete[] cluster;
 }
@@ -186,7 +184,7 @@ int main(int argc, char** argv) {
 		// Guarda los resultados
 		save_to_CSV(output_file_name, points, size);
 		
-		cout << "Time: " << fixed << (end-start) << setprecision(5) << " sec " << endl;
+		std::cout << "Time: " << fixed << (end-start) << " sec " << endl;
 	}
 	
 	
