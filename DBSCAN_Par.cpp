@@ -18,11 +18,14 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
     long long int i;
     float distance;
     
-    # pragma omp parallel for collapse(1) default(shared) private(i, distance)
+    # pragma omp for schedule(dynamic)
 	for(i = 0; i < size; i++) {
 	    distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));	
 	    if (distance < epsilon)
-	        vecinos.push_front(i);
+	    	#pragma omp critical 
+	    	{
+	        	vecinos.push_back(i);
+	        }
 	}
 }
 
@@ -55,8 +58,8 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 		        c++;
 		        cluster[i] = c;
 		        points[i][2] = 1;
+		        
 		        while(!vecinos.empty()) {
-					
 		            int q = vecinos.front();
 		            vecinos.pop_front();
 		            
