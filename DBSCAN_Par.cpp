@@ -1,5 +1,4 @@
 #include <omp.h>
-//#include <bits/stdc++.h> 
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -10,7 +9,6 @@
 #include <set>
 #include <algorithm>
 #include <time.h>
-#include "gen_data.cpp"
 
 using namespace std;
 
@@ -21,6 +19,7 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
     float distance;
     float xi = points[p][0];
     float yi = points[p][1];
+
 	cont = 0;
     # pragma omp for schedule(static) 
 	for(i = 0; i < size; i++) {
@@ -30,6 +29,7 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
 	    	{
 	        	vecinos.push_front(i);				
 	        }
+	    }
 	}
 }
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
@@ -122,8 +122,8 @@ void load_CSV(string file_name, float** points, long long int size) {
 		points[point_number][0] = stof(val);
 		getline(ss, val, ',');
 		points[point_number][1] = stof(val);
-		getline(ss, val, ',');
-		points[point_number][2] = stof(val);
+		points[point_number][2] = 0; // 0 -> noise, 1 -> core
+
 		point_number++;
     }
 }
@@ -145,35 +145,23 @@ int main(int argc, char** argv) {
     const long long int size = 20000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
-	const int number_threads = 32;
-	omp_set_dynamic(0);
+  	const int number_threads = 32;
+	  omp_set_dynamic(0);
     omp_set_num_threads(number_threads);
   
-
     srand(time(NULL)); // cambia la semilla del rng
-    //float** points = gen_data(size);  
     float** points = new float*[size];
-  
-    /*
-    for(long long int i = 0; i < size; i++) {
-        points[i] = new float[3]{0.0, 0.0, 0.0}; 
-        // index 0: position x
-        // index 1: position y 
-        // index 2: 0 for noise point, 1 for core point
-    }*/
 
-	// Carga los datos
 	load_CSV(input_file_name, points, size);
 	//print_data(size, points);
 	// Clasifica
 	double start = omp_get_wtime();
-	noise_detection(points, epsilon, min_samples, size);
-	double end = omp_get_wtime();
 
+	noise_detection(points, epsilon, min_samples, size);
+	
+	double end = omp_get_wtime();
 	// Guarda los resultados
 	save_to_CSV(output_file_name, points, size);
-	
-	std::cout << "Time: " << fixed << (end-start) << " sec " << endl;
 	
     for(long long int i = 0; i < size; i++) {
         delete[] points[i];
