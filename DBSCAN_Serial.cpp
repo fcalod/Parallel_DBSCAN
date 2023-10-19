@@ -13,17 +13,16 @@
 using namespace std;
 
 void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos) {
-    long long int i;
-    float distance;
+    //vecinos.empty();
     float xi = points[p][0];
     float yi = points[p][1];
-    
-	for(i = 0; i < size; i++) {
-	    distance = sqrt(pow(xi - points[i][0], 2) + pow(yi - points[i][1], 2));	
-	    if (distance < epsilon) {
-        	vecinos.push_back(i);
-	    }
-	}
+    float distance;
+
+    for(long long int i = 0; i < size; i++) {
+        distance = sqrt(pow(xi- points[i][0],2) + pow(yi- points[i][1],2));
+        if (distance < epsilon)
+            vecinos.push_front(i);
+    }
 }
 
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
