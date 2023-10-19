@@ -7,7 +7,6 @@
 #include <map>
 #include <vector>
 #include <list>
-//#include <algorithm>
 #include <time.h>
 
 using namespace std;
@@ -67,10 +66,8 @@ void region_query(float** points, int p, float epsilon, long long int size, vect
 
 void noise_detection(float** points, vector<int>* neighbors, float epsilon, int min_samples, long long int size) {
 	int num_clusters = 0;
-	//int** clusters = new int*[size/min_samples]; // guarda los clusters; no puede haber más de size/min_samples
-	vector<int> clusters[size]; // guarda los clusters; no puede haber más de size/min_samples
+	//vector<int> clusters[size]; // guarda los clusters; no puede haber más de size/min_samples
 	int* core = new int[size]; // guarda qué puntos son core
-	//vector<int> noise; // guarda qué puntos son ruido
 	map<int, int> visited; // mappea indices de puntos a: 0 -> no visitado, 1 -> visitado
 	deque<int> explore; // explora los vecinos de puntos core
 	
@@ -91,7 +88,7 @@ void noise_detection(float** points, vector<int>* neighbors, float epsilon, int 
 		// Si no se ha visitado el punto i, es parte de un nuevo cluster o es ruido
 		if(!visited[i] && core[i] == 1) {
 			explore.push_back(i);
-			clusters[num_clusters].push_back(i);
+			//clusters[num_clusters].push_back(i);
 			
 			// Explora los vecinos del punto core i y expande el cluster hasta terminarlo
 			while(explore.size() > 0) {
@@ -103,7 +100,7 @@ void noise_detection(float** points, vector<int>* neighbors, float epsilon, int 
 				
 					if(!visited[neighbor]) {
 						visited[neighbor] = 1;
-						clusters[num_clusters].push_back(neighbor);
+						//clusters[num_clusters].push_back(neighbor);
 						points[neighbors[p].at(i)][2] = 1; // Clustered point
 						
 						// Si es core, se agrega al queue
@@ -162,9 +159,9 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 20000;
+    const long long int size = 140000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
-    const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
+    const string output_file_name = "CSV/"+to_string(size)+"_results2.csv";
     clock_t start, end;
     srand(time(NULL)); // cambia la semilla del rng
     float** points = new float*[size];

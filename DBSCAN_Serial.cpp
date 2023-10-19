@@ -120,27 +120,16 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 20000;
+    //const long long int sizes[8] = {20000, 40000, 80000, 120000, 140000, 160000, 180000, 200000};
+    const long long int size = 10000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
-    const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
+    const string output_file_name = "CSV/"+to_string(size)+"_results1.csv";
     clock_t start, end;
     srand(time(NULL)); // cambia la semilla del rng
-    float** points;
+    float** points = new float*[size];
     
-    ifstream in(input_file_name);
-    
-    // Si el archivo existe, lo carga
-    if(in) {
-    	points = new float*[size];
-    	load_CSV(input_file_name, points, size);
-    } else {
-    	// Si no, genera datos nuevos y los guarda
-    	points = gen_data(size);
-    	save_to_CSV(input_file_name, points, size);
-    }
-  	
-    //print_data(size, points);
-    
+    // Carga los datos
+	load_CSV(input_file_name, points, size);
     // Clasifica
     start = clock();
  	// unsync the I/O of C and C++. 

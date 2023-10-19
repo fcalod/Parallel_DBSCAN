@@ -12,19 +12,17 @@
 
 using namespace std;
 
-int cont = 0;
-
 void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos) {	
     long long int i;
     float distance;
     float xi = points[p][0];
     float yi = points[p][1];
 
-	cont = 0;
     # pragma omp for schedule(static) 
 	for(i = 0; i < size; i++) {
 	    distance = sqrt(pow(xi- points[i][0],2) + pow(yi- points[i][1],2));		
 	    if (distance < epsilon)
+		{
 	    	#pragma omp critical 
 	    	{
 	        	vecinos.push_front(i);				
@@ -32,6 +30,7 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
 	    }
 	}
 }
+
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
 	int* cluster = new int[size]; 
     int c = 0; // cantidad de clusters
@@ -48,59 +47,51 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 	
 	for( i=1; i < size; i++) {
 		vecinos.clear();
-		if(cluster[i]==0) 
-		{
+		
+		if(cluster[i]==0) {
 			#pragma omp parallel
 			{
 				regionQuery(points, i, epsilon, size, vecinos);
 			}
+
 			if(vecinos.size() < min_samples) {
-					cluster[i] = -1;
-					points[i][2] = 0;		
-			}
-			else
-			{	
+				cluster[i] = -1;
+				points[i][2] = 0;		
+			} else {	
 				c++;
 				cluster[i] = c;
 				points[i][2] = 1;
 
 				int q;
 				
-					while(!vecinos.empty()) 
-					{
-						//cout<< omp_get_num_threads() << endl;
-					
-						q = vecinos.front();
-						vecinos.pop_front();
-							
-						if(cluster[q]==0) 
-						{
-							if (cluster[q] <=0 ) 
-							{
-								cluster[q] = c;
-								points[q][2] = 1;
-							}
-							#pragma omp parallel
-							{			
-								regionQuery(points,q,epsilon,size, vecinos2);
-							}
-							if(vecinos.size() >= min_samples) {
-							// Union de Stacks
-		
-								vecinos.merge(vecinos2);
-								vecinos.sort();
-								vecinos.unique();
-								vecinos2.clear();
-							   
-							}
+				while(!vecinos.empty()) {
+					q = vecinos.front();
+					vecinos.pop_front();
+						
+					if(cluster[q]==0) {
+						if (cluster[q] <=0 ) {
+							cluster[q] = c;
+							points[q][2] = 1;
 						}
-					}  
-				
+						#pragma omp parallel
+						{			
+							regionQuery(points,q,epsilon,size, vecinos2);
+						}
+						if(vecinos.size() >= min_samples) {
+							// Union de Stacks
+							vecinos.merge(vecinos2);
+							vecinos.sort();
+							vecinos.unique();
+							vecinos2.clear();
+						}
+					}
+				}  
 			}
 		}
 	}	
-std::cout << c << " Clusters, -> " << "Complete" << "\n"; 
-delete[] cluster;
+	
+	cout << c << " Clusters, -> " << "Complete" << "\n"; 
+	delete[] cluster;
 }
 
 void load_CSV(string file_name, float** points, long long int size) {
@@ -142,24 +133,23 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 20000;
+    const long long int size = 10000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
-    const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
-  	const int number_threads = 32;
-	  omp_set_dynamic(0);
+    const string output_file_name = "CSV/"+to_string(size)+"_results_par1.csv";
+	const int number_threads = 16;
+  	omp_set_dynamic(0);
     omp_set_num_threads(number_threads);
-  
     srand(time(NULL)); // cambia la semilla del rng
     float** points = new float*[size];
-
 	load_CSV(input_file_name, points, size);
-	//print_data(size, points);
+	
 	// Clasifica
 	double start = omp_get_wtime();
-
 	noise_detection(points, epsilon, min_samples, size);
-	
 	double end = omp_get_wtime();
+	
+	cout << "Time: " << fixed << (end-start) << " sec; size: " << size << endl;
+
 	// Guarda los resultados
 	save_to_CSV(output_file_name, points, size);
 	
@@ -170,4 +160,3 @@ int main(int argc, char** argv) {
     
     return 0;
 }
-
