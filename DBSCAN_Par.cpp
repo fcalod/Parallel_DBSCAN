@@ -29,7 +29,7 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
 	    	{
 	        	vecinos.push_front(i);				
 	        }
-	    }
+	    
 	}
 }
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
@@ -160,6 +160,9 @@ int main(int argc, char** argv) {
 	noise_detection(points, epsilon, min_samples, size);
 	
 	double end = omp_get_wtime();
+
+	cout << "Time: " << fixed << (end-start) << " sec; size: " << size << endl;
+
 	// Guarda los resultados
 	save_to_CSV(output_file_name, points, size);
 	
