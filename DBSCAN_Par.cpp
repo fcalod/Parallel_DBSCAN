@@ -1,5 +1,4 @@
 #include <omp.h>
-//#include <bits/stdc++.h> 
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -10,113 +9,93 @@
 #include <set>
 #include <algorithm>
 #include <time.h>
-#include "gen_data.cpp"
 
 using namespace std;
 
 void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos) {
     long long int i;
     float distance;
+    float xi = points[p][0];
+    float yi = points[p][1];
     
     # pragma omp for schedule(static)
 	for(i = 0; i < size; i++) {
-	    distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));	
-	    if (distance < epsilon)
+		//cout << "Number cores " << omp_get_num_threads() << endl;
+	    distance = sqrt(pow(xi - points[i][0], 2) + pow(yi - points[i][1], 2));	
+	    if (distance < epsilon) {
 	    	#pragma omp critical 
 	    	{
 	        	vecinos.push_back(i);
 	        }
+	    }
 	}
 }
 
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
-	int* cluster = new int[size]; 
+	int* cluster = new int[size];
 	
 	# pragma omp parallel for
 	for(long long int i = 0; i < size; i++)
 		cluster[i] = 0; // -1 -> Noise // 0 -> Unvisited // C - Visited, part of cluster C
-
+	
 	int c = 0; // cantidad de clusters
 	list<int> vecinos;
 	list<int> vecinos2;
 	long long int i;
-
-	# pragma omp parallel for collapse(1) default(shared) private(vecinos,vecinos2,i) if(c>=1)
-	for( i=0; i < size; i++) {
-	   //Si no hemos vistado el punto, hacer el proceso
-	   vecinos.clear();
+	
+	//# pragma omp parallel for private(vecinos,vecinos2,i) default(shared) if(c>=1) 
+	for(i = 1; i < size; i++) {
+		//cout << "Number cores " << omp_get_num_threads() << endl;
+		//Si no hemos vistado el punto, hacer el proceso
+		vecinos.clear();
 	   
-	   if(cluster[i]==0) {
-		   regionQuery(points, i, epsilon, size, vecinos);
+		if(cluster[i]==0) {
+			#pragma omp parallel
+			{
+				regionQuery(points, i, epsilon, size, vecinos);
+		   	}
 		   
-		   
-		   if(vecinos.size() < min_samples) {
-		        cluster[i] = -1;
-		        points[i][2] = 0;
+			if(vecinos.size() < min_samples) {
+				cluster[i] = -1;
+				points[i][2] = 0;
 				
-		   } else {
-		        c++;
-		        cluster[i] = c;
-		        points[i][2] = 1;
-		        
-		        while(!vecinos.empty()) {
-		            int q = vecinos.front();
-		            vecinos.pop_front();
-		            
-		            if(cluster[q]==0) {
-		                if (cluster[q] <=0 ) {
-		                    cluster[q] = c;
-		                    points[q][2] = 1;
-		                }
-		                
-		                regionQuery(points,q,epsilon,size, vecinos2);
+			} else {
+				c++;
+				cluster[i] = c;
+				points[i][2] = 1;
+				
+				while(!vecinos.empty()) {
+					int q = vecinos.front();
+					vecinos.pop_front();
+					
+					if(cluster[q]==0) {
+						if (cluster[q] <=0 ) {
+							cluster[q] = c;
+							points[q][2] = 1;
+						}
 						
-		                if(vecinos.size() >= min_samples) {
-		                  // Union de Stacks
-		                  vecinos.merge(vecinos2);
-		                  vecinos2.clear();
-		                  vecinos.unique();
-		                }    
-		            }
-		        }
+						#pragma omp parallel
+						{
+							regionQuery(points,q,epsilon,size, vecinos2);
+						}
+						
+						if(vecinos.size() >= min_samples) {
+						  // Union de Stacks
+						  vecinos.merge(vecinos2);
+						  vecinos2.clear();
+						  vecinos.unique();
+						}    
+					}
+    			}
 		    }    
 		}
 	}
-
-    std::cout << c << " Clusters, -> " << "Complete" << "\n"; 
+	
+    cout << c << " Clusters, -> " << "Complete" << "\n"; 
   
     delete[] cluster;
 }
 
-   /*
-   DBSCAN(D, eps, MinPts)
-   C = 0
-   for each unvisited point P in dataset D  // for
-      mark P as visited // 
-      NeighborPts = regionQuery(P, eps)
-      if sizeof(NeighborPts) < MinPts
-         mark P as NOISE
-      else
-         C = next cluster
-         expandCluster(P, NeighborPts, C, eps, MinPts)
-
-expandCluster(P, NeighborPts, C, eps, MinPts)
-   add P to cluster C
-   for each point P' in NeighborPts
-      if P' is not visited
-         mark P' as visited
-         NeighborPts' = regionQuery(P', eps)
-         if sizeof(NeighborPts') >= MinPts
-            NeighborPts = NeighborPts joined with NeighborPts'
-      if P' is not yet member of any cluster
-         add P' to cluster C
-
-regionQuery(P, eps)
-   return all points within P's eps-neighborhood (including P)
-   
-   
-   */
- 
 void load_CSV(string file_name, float** points, long long int size) {
     ifstream in(file_name);
     
@@ -136,8 +115,8 @@ void load_CSV(string file_name, float** points, long long int size) {
 		points[point_number][0] = stof(val);
 		getline(ss, val, ',');
 		points[point_number][1] = stof(val);
-		getline(ss, val, ',');
-		points[point_number][2] = stof(val);
+		//getline(ss, val, ',');
+		points[point_number][2] = 0; // 0 -> noise, 1 -> core
 
 		point_number++;
     }
@@ -157,43 +136,26 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 8000;
+    const long long int size = 20000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
-    clock_t start, end;
     omp_set_num_threads(16);
     srand(time(NULL)); // cambia la semilla del rng
-    float** points;
+    float** points = new float*[size];
     
-    ifstream in(input_file_name);
-    
-    // Si el archivo existe, lo carga
-    if(in) {
-    	points = new float*[size];
-    	load_CSV(input_file_name, points, size);
-    } else {
-    	// Si no, genera datos nuevos y los guarda
-    	points = gen_data(size);
-    	save_to_CSV(input_file_name, points, size);
-    }
-    
-	#pragma omp
-	{
-	  	// Carga los datos
-		load_CSV(input_file_name, points, size);
-		//print_data(size, points);
-		// Clasifica
-		double start = omp_get_wtime();
-		
-		noise_detection(points, epsilon, min_samples, size);
-		
-		double end = omp_get_wtime();
-		// Guarda los resultados
-		save_to_CSV(output_file_name, points, size);
-		
-		cout << "Time: " << fixed << (end-start) << " sec; size: " << size << endl;
-	}
+  	// Carga los datos
+	load_CSV(input_file_name, points, size);
+	//print_data(size, points);
+	// Clasifica
+	double start = omp_get_wtime();
 	
+	noise_detection(points, epsilon, min_samples, size);
+	
+	double end = omp_get_wtime();
+	// Guarda los resultados
+	save_to_CSV(output_file_name, points, size);
+	
+	cout << "Time: " << fixed << (end-start) << " sec; size: " << size << endl;
 	
     for(long long int i = 0; i < size; i++) {
         delete[] points[i];

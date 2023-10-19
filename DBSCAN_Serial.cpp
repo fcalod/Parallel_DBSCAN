@@ -13,12 +13,17 @@
 using namespace std;
 
 void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos) {
-    //vecinos.empty();
-    for(long long int i = 0; i < size; i++) {
-        float distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));
-        if (distance < epsilon)
-            vecinos.push_front(i);
-    }
+    long long int i;
+    float distance;
+    float xi = points[p][0];
+    float yi = points[p][1];
+    
+	for(i = 0; i < size; i++) {
+	    distance = sqrt(pow(xi - points[i][0], 2) + pow(yi - points[i][1], 2));	
+	    if (distance < epsilon) {
+        	vecinos.push_back(i);
+	    }
+	}
 }
 
 void noise_detection(float** points, float epsilon, int min_samples, long long int size) {
@@ -76,35 +81,6 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
     delete[] cluster;
 }
 
-   /*
-   DBSCAN(D, eps, MinPts)
-   C = 0
-   for each unvisited point P in dataset D  // for
-      mark P as visited // 
-      NeighborPts = regionQuery(P, eps)
-      if sizeof(NeighborPts) < MinPts
-         mark P as NOISE
-      else
-         C = next cluster
-         expandCluster(P, NeighborPts, C, eps, MinPts)
-
-expandCluster(P, NeighborPts, C, eps, MinPts)
-   add P to cluster C
-   for each point P' in NeighborPts
-      if P' is not visited
-         mark P' as visited
-         NeighborPts' = regionQuery(P', eps)
-         if sizeof(NeighborPts') >= MinPts
-            NeighborPts = NeighborPts joined with NeighborPts'
-      if P' is not yet member of any cluster
-         add P' to cluster C
-
-regionQuery(P, eps)
-   return all points within P's eps-neighborhood (including P)
-   
-   
-   */
- 
 void load_CSV(string file_name, float** points, long long int size) {
     ifstream in(file_name);
     
@@ -124,8 +100,8 @@ void load_CSV(string file_name, float** points, long long int size) {
 		points[point_number][0] = stof(val);
 		getline(ss, val, ',');
 		points[point_number][1] = stof(val);
-		getline(ss, val, ',');
-		points[point_number][2] = stof(val);
+		//getline(ss, val, ',');
+		points[point_number][2] = 0; // 0 -> noise, 1 -> core
 
 		point_number++;
     }
@@ -145,7 +121,7 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 8000;
+    const long long int size = 20000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
     clock_t start, end;
