@@ -14,17 +14,19 @@
 
 using namespace std;
 
+int cont = 0;
+
 void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos) {
     long long int i;
     float distance;
-    
-    # pragma omp for schedule(dynamic)
+									
+    # pragma omp for schedule(static)
 	for(i = 0; i < size; i++) {
 	    distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));	
 	    if (distance < epsilon)
 	    	#pragma omp critical 
 	    	{
-	        	vecinos.push_back(i);
+	        	vecinos.push_front(i);
 	        }
 	}
 }
@@ -41,24 +43,20 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 	list<int> vecinos2;
 	long long int i;
 
-	//# pragma omp parallel for collapse(1) default(shared) private(vecinos,vecinos2,i)
+	# pragma omp parallel for schedule(guided) default(shared) private(vecinos,vecinos2,i) if (c>=1)
 	for( i=0; i < size; i++) {
 	   //Si no hemos vistado el punto, hacer el proceso
 	   vecinos.clear();
-	   
 	   if(cluster[i]==0) {
 		   regionQuery(points, i, epsilon, size, vecinos);
-		   
-		   
 		   if(vecinos.size() < min_samples) {
 		        cluster[i] = -1;
-		        points[i][2] = 0;
-				
+		        points[i][2] = 0;		
 		   } else {
 		        c++;
 		        cluster[i] = c;
 		        points[i][2] = 1;
-		        
+
 		        while(!vecinos.empty()) {
 		            int q = vecinos.front();
 		            vecinos.pop_front();
@@ -68,13 +66,15 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 		                    cluster[q] = c;
 		                    points[q][2] = 1;
 		                }
-		                
+		            
 		                regionQuery(points,q,epsilon,size, vecinos2);
-
+ 
 		                if(vecinos.size() >= min_samples) {
 		                  // Union de Stacks
 		                  vecinos.merge(vecinos2);
 		                  vecinos2.clear();
+						  vecinos.sort();
+						  vecinos.unique();
 		                }    
 		            }
 		        }
@@ -87,35 +87,6 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
     delete[] cluster;
 }
 
-   /*
-   DBSCAN(D, eps, MinPts)
-   C = 0
-   for each unvisited point P in dataset D  // for
-      mark P as visited // 
-      NeighborPts = regionQuery(P, eps)
-      if sizeof(NeighborPts) < MinPts
-         mark P as NOISE
-      else
-         C = next cluster
-         expandCluster(P, NeighborPts, C, eps, MinPts)
-
-expandCluster(P, NeighborPts, C, eps, MinPts)
-   add P to cluster C
-   for each point P' in NeighborPts
-      if P' is not visited
-         mark P' as visited
-         NeighborPts' = regionQuery(P', eps)
-         if sizeof(NeighborPts') >= MinPts
-            NeighborPts = NeighborPts joined with NeighborPts'
-      if P' is not yet member of any cluster
-         add P' to cluster C
-
-regionQuery(P, eps)
-   return all points within P's eps-neighborhood (including P)
-   
-   
-   */
- 
 void load_CSV(string file_name, float** points, long long int size) {
     ifstream in(file_name);
     
@@ -160,7 +131,7 @@ int main(int argc, char** argv) {
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
     clock_t start, end;
-    omp_set_num_threads(8);
+    omp_set_num_threads(4);
     srand(time(NULL)); // cambia la semilla del rng
     //float** points = gen_data(size);  
     float** points = new float*[size];

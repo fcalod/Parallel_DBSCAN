@@ -62,6 +62,8 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 		                  // Union de Stacks
 		                  vecinos.merge(vecinos2);
 		                  vecinos2.clear();
+						  vecinos.sort();
+						  vecinos.unique();
 		                }    
 		            }
 		        }
