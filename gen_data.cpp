@@ -7,7 +7,7 @@ using namespace std;
 void print_data(long long int size, float** points) {
 	//int size = sizeof(points)/sizeof(int);
 	cout << "Datos: \n";
-
+	
 	for(long long int i = 0; i < size; i++)
 		cout << "("  << points[i][0] << ", " << points[i][1] << "), Clasif: " << points[i][2] << "\n";
 }
