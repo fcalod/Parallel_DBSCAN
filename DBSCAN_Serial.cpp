@@ -62,6 +62,8 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 		                  // Union de Stacks
 		                  vecinos.merge(vecinos2);
 		                  vecinos2.clear();
+		                  vecinos.sort();
+		                  vecinos.unique();
 		                }    
 		            }
 		        }
@@ -143,35 +145,36 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 4000;
+    const long long int size = 8000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
     clock_t start, end;
     srand(time(NULL)); // cambia la semilla del rng
-    //float** points = gen_data(size);  
-    float** points = new float*[size];
-  
-    /*
-    for(long long int i = 0; i < size; i++) {
-        points[i] = new float[3]{0.0, 0.0, 0.0}; 
-        // index 0: position x
-        // index 1: position y 
-        // index 2: 0 for noise point, 1 for core point
-    }*/
-	
-  	// Carga los datos
-    load_CSV(input_file_name, points, size);
+    float** points;
+    
+    ifstream in(input_file_name);
+    
+    // Si el archivo existe, lo carga
+    if(in) {
+    	points = new float*[size];
+    	load_CSV(input_file_name, points, size);
+    } else {
+    	// Si no, genera datos nuevos y los guarda
+    	points = gen_data(size);
+    	save_to_CSV(input_file_name, points, size);
+    }
+  	
     //print_data(size, points);
+    
     // Clasifica
     start = clock();
  	// unsync the I/O of C and C++. 
-    //ios_base::sync_with_stdio(false); 
     noise_detection(points, epsilon, min_samples, size); 
     end = clock();
     // Guarda los resultados
     save_to_CSV(output_file_name, points, size);
 	
-	cout << "Time: " << fixed << double(end-start) / double(CLOCKS_PER_SEC) << " sec " << endl;
+	cout << "Time: " << fixed << double(end-start) / double(CLOCKS_PER_SEC) << " sec; size: " << size << endl;
 	
     for(long long int i = 0; i < size; i++) {
         delete[] points[i];

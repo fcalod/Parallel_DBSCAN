@@ -18,7 +18,7 @@ void regionQuery(float** points, int p, float epsilon, long long int size, list<
     long long int i;
     float distance;
     
-    # pragma omp for schedule(dynamic)
+    # pragma omp for schedule(static)
 	for(i = 0; i < size; i++) {
 	    distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));	
 	    if (distance < epsilon)
@@ -41,7 +41,7 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 	list<int> vecinos2;
 	long long int i;
 
-	//# pragma omp parallel for collapse(1) default(shared) private(vecinos,vecinos2,i)
+	# pragma omp parallel for collapse(1) default(shared) private(vecinos,vecinos2,i) if(c>=1)
 	for( i=0; i < size; i++) {
 	   //Si no hemos vistado el punto, hacer el proceso
 	   vecinos.clear();
@@ -70,11 +70,12 @@ void noise_detection(float** points, float epsilon, int min_samples, long long i
 		                }
 		                
 		                regionQuery(points,q,epsilon,size, vecinos2);
-
+						
 		                if(vecinos.size() >= min_samples) {
 		                  // Union de Stacks
 		                  vecinos.merge(vecinos2);
 		                  vecinos2.clear();
+		                  vecinos.unique();
 		                }    
 		            }
 		        }
@@ -156,23 +157,26 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 4000;
+    const long long int size = 8000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
     clock_t start, end;
-    omp_set_num_threads(8);
+    omp_set_num_threads(16);
     srand(time(NULL)); // cambia la semilla del rng
-    //float** points = gen_data(size);  
-    float** points = new float*[size];
-  
-    /*
-    for(long long int i = 0; i < size; i++) {
-        points[i] = new float[3]{0.0, 0.0, 0.0}; 
-        // index 0: position x
-        // index 1: position y 
-        // index 2: 0 for noise point, 1 for core point
-    }*/
-	
+    float** points;
+    
+    ifstream in(input_file_name);
+    
+    // Si el archivo existe, lo carga
+    if(in) {
+    	points = new float*[size];
+    	load_CSV(input_file_name, points, size);
+    } else {
+    	// Si no, genera datos nuevos y los guarda
+    	points = gen_data(size);
+    	save_to_CSV(input_file_name, points, size);
+    }
+    
 	#pragma omp
 	{
 	  	// Carga los datos
@@ -187,7 +191,7 @@ int main(int argc, char** argv) {
 		// Guarda los resultados
 		save_to_CSV(output_file_name, points, size);
 		
-		std::cout << "Time: " << fixed << (end-start) << " sec " << endl;
+		cout << "Time: " << fixed << (end-start) << " sec; size: " << size << endl;
 	}
 	
 	
