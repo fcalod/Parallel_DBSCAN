@@ -14,8 +14,12 @@ using namespace std;
 
 void regionQuery(float** points, int p, float epsilon, long long int size, list<int> &vecinos) {
     //vecinos.empty();
+    float xi = points[p][0];
+    float yi = points[p][1];
+    float distance;
+
     for(long long int i = 0; i < size; i++) {
-        float distance = sqrt(pow(points[p][0] - points[i][0],2) + pow(points[p][1] - points[i][1],2));
+        distance = sqrt(pow(xi- points[i][0],2) + pow(yi- points[i][1],2));
         if (distance < epsilon)
             vecinos.push_front(i);
     }
@@ -145,7 +149,7 @@ void save_to_CSV(string file_name, float** points, long long int size) {
 int main(int argc, char** argv) {
     const float epsilon = 0.03;
     const int min_samples = 10;
-    const long long int size = 4000;
+    const long long int size = 20000;
     const string input_file_name = "CSV/"+to_string(size)+"_data.csv";
     const string output_file_name = "CSV/"+to_string(size)+"_results.csv";
     clock_t start, end;
